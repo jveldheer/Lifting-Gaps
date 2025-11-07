@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { workoutProgram } from '../data/workoutData';
 import { getProfile, getOneRepMaxes, saveWorkoutLog, calculateWorkingWeight } from '../utils/storage';
+import { getExerciseDetails } from '../data/exerciseLibrary';
 
 function Workout({ currentPhase }) {
   const { day } = useParams();
   const navigate = useNavigate();
   const [selectedDay, setSelectedDay] = useState(day || 'monday');
   const [completedExercises, setCompletedExercises] = useState(new Set());
+  const [expandedExercises, setExpandedExercises] = useState(new Set());
   const [logs, setLogs] = useState({});
 
   const profile = getProfile();
@@ -17,7 +19,18 @@ function Workout({ currentPhase }) {
 
   const handleDayChange = (newDay) => {
     setSelectedDay(newDay);
+    setExpandedExercises(new Set()); // Reset expanded state when changing days
     navigate(`/workout/${newDay}`);
+  };
+
+  const toggleExerciseExpanded = (exerciseId) => {
+    const newExpanded = new Set(expandedExercises);
+    if (newExpanded.has(exerciseId)) {
+      newExpanded.delete(exerciseId);
+    } else {
+      newExpanded.add(exerciseId);
+    }
+    setExpandedExercises(newExpanded);
   };
 
   const toggleExerciseComplete = (exerciseId) => {
@@ -160,19 +173,41 @@ function Workout({ currentPhase }) {
           </ol>
         </div>
 
+        <div className="mb-3" style={{
+          padding: '1rem',
+          backgroundColor: 'var(--primary)',
+          color: 'white',
+          borderRadius: '0.5rem',
+          fontSize: '0.875rem',
+          textAlign: 'center',
+          fontWeight: '500'
+        }}>
+          💡 Click on any exercise name to see detailed form instructions, O-line transfer benefits, and coaching cues
+        </div>
+
         <div className="exercise-list">
           {workout.exercises.map((exercise, index) => {
             const workingWeightInfo = getWorkingWeightInfo(exercise);
             const isCompleted = completedExercises.has(exercise.id);
+            const isExpanded = expandedExercises.has(exercise.id);
             const currentLog = logs[exercise.id] || {};
+            const exerciseDetails = getExerciseDetails(exercise.name);
 
             return (
               <div
                 key={exercise.id}
                 className={`exercise-card ${isCompleted ? 'completed' : ''}`}
               >
-                <div className="exercise-header">
-                  <div>
+                <div
+                  className="exercise-header"
+                  onClick={() => toggleExerciseExpanded(exercise.id)}
+                  style={{ cursor: 'pointer', userSelect: 'none' }}
+                  title="Click for detailed exercise explanation"
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ fontSize: '1.25rem', color: 'var(--primary)' }}>
+                      {isExpanded ? '▼' : '▶'}
+                    </span>
                     <div className="exercise-name">
                       {index + 1}. {exercise.name}
                     </div>
@@ -223,6 +258,145 @@ function Workout({ currentPhase }) {
                 {exercise.alternative && (
                   <div className="text-sm text-secondary" style={{ marginTop: '0.5rem' }}>
                     <strong>Alternative:</strong> {exercise.alternative}
+                  </div>
+                )}
+
+                {/* Detailed Exercise Explanation */}
+                {isExpanded && exerciseDetails && (
+                  <div className="exercise-explanation" style={{
+                    marginTop: '1rem',
+                    padding: '1rem',
+                    backgroundColor: 'var(--bg-primary)',
+                    borderRadius: '0.5rem',
+                    border: '2px solid var(--primary)'
+                  }}>
+                    <div style={{ marginBottom: '1rem' }}>
+                      <div style={{
+                        fontSize: '0.875rem',
+                        fontWeight: 'bold',
+                        color: 'var(--primary)',
+                        marginBottom: '0.25rem'
+                      }}>
+                        🎯 O-LINE TRANSFER
+                      </div>
+                      <div style={{ fontSize: '0.875rem', lineHeight: '1.5' }}>
+                        {exerciseDetails.olineTransfer}
+                      </div>
+                    </div>
+
+                    <div style={{ marginBottom: '1rem' }}>
+                      <div style={{
+                        fontSize: '0.875rem',
+                        fontWeight: 'bold',
+                        marginBottom: '0.25rem'
+                      }}>
+                        💪 MUSCLES TARGETED
+                      </div>
+                      <div style={{ fontSize: '0.875rem' }}>
+                        {exerciseDetails.musclesTargeted.join(', ')}
+                      </div>
+                    </div>
+
+                    <div style={{ marginBottom: '1rem' }}>
+                      <div style={{
+                        fontSize: '0.875rem',
+                        fontWeight: 'bold',
+                        marginBottom: '0.5rem'
+                      }}>
+                        🔧 SETUP
+                      </div>
+                      <ul style={{
+                        fontSize: '0.875rem',
+                        paddingLeft: '1.5rem',
+                        lineHeight: '1.6'
+                      }}>
+                        {exerciseDetails.setup.map((point, idx) => (
+                          <li key={idx} style={{ marginBottom: '0.25rem' }}>{point}</li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div style={{ marginBottom: '1rem' }}>
+                      <div style={{
+                        fontSize: '0.875rem',
+                        fontWeight: 'bold',
+                        marginBottom: '0.5rem'
+                      }}>
+                        ⚡ EXECUTION
+                      </div>
+                      <ol style={{
+                        fontSize: '0.875rem',
+                        paddingLeft: '1.5rem',
+                        lineHeight: '1.6'
+                      }}>
+                        {exerciseDetails.execution.map((point, idx) => (
+                          <li key={idx} style={{ marginBottom: '0.25rem' }}>{point}</li>
+                        ))}
+                      </ol>
+                    </div>
+
+                    <div style={{ marginBottom: '1rem' }}>
+                      <div style={{
+                        fontSize: '0.875rem',
+                        fontWeight: 'bold',
+                        marginBottom: '0.5rem',
+                        color: 'var(--danger)'
+                      }}>
+                        ❌ COMMON MISTAKES
+                      </div>
+                      <ul style={{
+                        fontSize: '0.875rem',
+                        paddingLeft: '1.5rem',
+                        lineHeight: '1.6'
+                      }}>
+                        {exerciseDetails.commonMistakes.map((mistake, idx) => (
+                          <li key={idx} style={{ marginBottom: '0.25rem' }}>{mistake}</li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div>
+                      <div style={{
+                        fontSize: '0.875rem',
+                        fontWeight: 'bold',
+                        marginBottom: '0.5rem',
+                        color: 'var(--secondary)'
+                      }}>
+                        🗣️ COACHING CUES
+                      </div>
+                      <div style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: '0.5rem'
+                      }}>
+                        {exerciseDetails.coacingCues.map((cue, idx) => (
+                          <span key={idx} style={{
+                            fontSize: '0.75rem',
+                            padding: '0.25rem 0.5rem',
+                            backgroundColor: 'var(--secondary)',
+                            color: 'white',
+                            borderRadius: '0.25rem',
+                            fontWeight: '500'
+                          }}>
+                            {cue}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {isExpanded && !exerciseDetails && (
+                  <div style={{
+                    marginTop: '1rem',
+                    padding: '1rem',
+                    backgroundColor: 'var(--bg-secondary)',
+                    borderRadius: '0.5rem',
+                    fontSize: '0.875rem',
+                    textAlign: 'center',
+                    color: 'var(--text-secondary)'
+                  }}>
+                    Detailed explanation coming soon for this exercise.
                   </div>
                 )}
 
