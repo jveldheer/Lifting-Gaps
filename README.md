@@ -2,6 +2,18 @@
 
 A four-day, high-volume, high-intensity off-season lifting plan engineered for offensive line mechanics (ages 14–25). This program couples what wins in the trenches—horizontal force for drive blocks, angle-specific stiffness for pass-pro anchors, rapid, accurate hand strikes, and trunk/bracing under load—with methods supported by top sport-science and NSCA guidance.
 
+## 📱 Web App
+
+This repository includes a comprehensive web application to track your workouts, log progress, and calculate working weights. See [APP_README.md](APP_README.md) for setup instructions.
+
+**Quick Start:**
+```bash
+npm install
+npm run dev
+```
+
+---
+
 ## Why These Methods Map to O-Line Play (Science in Brief)
 
 1. **Plays are short and violent, rest is relatively long** → Train alactic power and repeatability, not roadwork. Typical play lasts only a few seconds with ~25–35 s between snaps in college/NFL datasets; long-distance running is counter-specific for linemen per NSCA.
